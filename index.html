@@ -271,7 +271,6 @@
   </footer>
 
   <script>
-    /* 音效管理器 (Web Audio API) */
     class SoundManager {
       constructor() {
         this.ctx = null;
@@ -480,11 +479,9 @@
       { char: '追', zhuyin: 'ㄓㄨㄟ', keys: ['5', 'j', 'o'], keyTokens: [{ k: '5', z: 'ㄓ' }, { k: 'j', z: 'ㄨ' }, { k: 'o', z: 'ㄟ' }] },
       { char: '求', zhuyin: 'ㄑㄧㄡˊ', keys: ['f', 'u', '.', '6'], keyTokens: [{ k: 'f', z: 'ㄑ' }, { k: 'u', z: 'ㄧ' }, { k: '.', z: 'ㄡ' }, { k: '6', z: 'ˊ' }] },
       { char: '卓', zhuyin: 'ㄓㄨㄛˊ', keys: ['5', 'j', 'i', '6'], keyTokens: [{ k: '5', z: 'ㄓ' }, { k: 'j', z: 'ㄨ' }, { k: 'i', z: 'ㄛ' }, { k: '6', z: 'ˊ' }] },
-      { char: '越', zhuyin: 'ㄩㄝˋ', keys: ['m', ',', '4'], keyTokens: [{ k: 'm', z: 'ㄩ' }, { k: ',', z: 'ㄝ' }, { k: '4', z: 'ˋ' }] },
       { char: '博', zhuyin: 'ㄅㄛˊ', keys: ['1', 'i', '6'], keyTokens: [{ k: '1', z: 'ㄅ' }, { k: 'i', z: 'ㄛ' }, { k: '6', z: 'ˊ' }] },
       { char: '覽', zhuyin: 'ㄌㄢˇ', keys: ['x', '0', '3'], keyTokens: [{ k: 'x', z: 'ㄌ' }, { k: '0', z: 'ㄢ' }, { k: '3', z: 'ˇ' }] },
       { char: '群', zhuyin: 'ㄑㄩㄣˊ', keys: ['f', 'm', 'p', '6'], keyTokens: [{ k: 'f', z: 'ㄑ' }, { k: 'm', z: 'ㄩ' }, { k: 'p', z: 'ㄣ' }, { k: '6', z: 'ˊ' }] },
-      { char: '書', zhuyin: 'ㄕㄨ', keys: ['g', 'j'], keyTokens: [{ k: 'g', z: 'ㄕ' }, { k: 'j', z: 'ㄨ' }] },
       { char: '發', zhuyin: 'ㄈㄚ', keys: ['z', '8'], keyTokens: [{ k: 'z', z: 'ㄈ' }, { k: '8', z: 'ㄚ' }] },
       { char: '展', zhuyin: 'ㄓㄢˇ', keys: ['5', '0', '3'], keyTokens: [{ k: '5', z: 'ㄓ' }, { k: '0', z: 'ㄢ' }, { k: '3', z: 'ˇ' }] },
       { char: '潛', zhuyin: 'ㄑㄧㄢˊ', keys: ['f', 'u', '0', '6'], keyTokens: [{ k: 'f', z: 'ㄑ' }, { k: 'u', z: 'ㄧ' }, { k: '0', z: 'ㄢ' }, { k: '6', z: 'ˊ' }] },
@@ -514,8 +511,8 @@
       words: [],
       spawnInterval: null,
       timerInterval: null,
-      spawnDelay: 1100,
-      fallSpeed: 1.75,
+      spawnDelay: 980,
+      fallSpeed: 1.55,
       lastSpawnedChar: ''
     };
 
@@ -592,13 +589,11 @@
       }, 650);
     }
 
-    // 速度設定
     function applySpeedSettings() {
       if (gameState.speedMode === 'slow') {
         gameState.fallSpeed = 1.25;
         gameState.spawnDelay = 1400;
       } else if (gameState.speedMode === 'normal') {
-        // 標準競賽模式：速度放慢一歇歇（1.8 -> 1.55），字卡產生頻率微調加速（1100ms -> 980ms），讓畫面上字數稍微多一點點
         gameState.fallSpeed = 1.55;
         gameState.spawnDelay = 980;
       } else if (gameState.speedMode === 'fast') {
@@ -678,7 +673,6 @@
       }
     }
 
-    // 精緻化字卡按鍵渲染（尺寸精緻適中，不遮蔽視野）
     function renderWordBadges(wordObj) {
       const container = wordObj.element.querySelector('.key-badges-container');
       if (!container) return;
@@ -714,34 +708,32 @@
       if (!gameState.active) return;
       const stageW = gameStage.clientWidth || 900;
       
-      // 取得目前畫面上已存在字卡的所有 keyStr 與前綴
-      const activeKeyStrs = gameState.words.map(w => w.keyStr);
-      const activeChars = gameState.words.map(w => w.char);
-
-      // 篩選候選字庫：
-      // 1. 不是上一次剛出現的字
-      // 2. 畫面上不可有完全相同的字
-      // 3. 畫面上不可有「前綴完全相同」或「拼音按鍵開頭相同」的同音/諧音字（例如天 wu0 與舔 wu03）
-      let candidates = PRIMARY_WORDS.filter(w => {
-        if (w.char === gameState.lastSpawnedChar) return false;
-        if (activeChars.includes(w.char)) return false;
-
-        for (const existingKey of activeKeyStrs) {
-          // 若兩者有相互前綴重疊，則排除，避免打鍵盤時產生衝突
-          if (existingKey.startsWith(w.keyStr) || w.keyStr.startsWith(existingKey)) {
-            return false;
-          }
+      // 收集畫面上已存在的字之注音前綴與按鍵首字符（防止同音字或同按鍵前綴字同時出現）
+      const activePrefixes = new Set();
+      gameState.words.forEach(w => {
+        if (w.keyStr) {
+          activePrefixes.add(w.keyStr.slice(0, 2));
+          activePrefixes.add(w.keyStr.charAt(0));
         }
-        return true;
+        if (w.zhuyin) {
+          activePrefixes.add(w.zhuyin.slice(0, 2));
+        }
       });
 
-      // 若字庫過濾後暫無合適字，退回基本不重複字
-      if (candidates.length === 0) {
-        candidates = PRIMARY_WORDS.filter(w => !activeChars.includes(w.char));
-        if (candidates.length === 0) candidates = PRIMARY_WORDS;
-      }
+      // 過濾字庫：不重複上次字，且不與畫面上任何字的拼音前綴衝突
+      let pool = PRIMARY_WORDS.filter(w => {
+        if (w.char === gameState.lastSpawnedChar) return false;
+        const keyPrefix = w.keys.join('').slice(0, 2);
+        const zhuyinPrefix = w.zhuyin.slice(0, 2);
+        return !activePrefixes.has(keyPrefix) && !activePrefixes.has(zhuyinPrefix);
+      });
 
-      const wordData = candidates[Math.floor(Math.random() * candidates.length)];
+      if (pool.length === 0) {
+        pool = PRIMARY_WORDS.filter(w => w.char !== gameState.lastSpawnedChar);
+      }
+      if (pool.length === 0) pool = PRIMARY_WORDS;
+
+      const wordData = pool[Math.floor(Math.random() * pool.length)];
       gameState.lastSpawnedChar = wordData.char;
       
       const bubbleColors = [
@@ -754,7 +746,6 @@
       const colorScheme = bubbleColors[Math.floor(Math.random() * bubbleColors.length)];
 
       const card = document.createElement('div');
-      // 圓形氣泡造型（無大外框，中文字用圓圈圈起來，下方為微型提示）
       card.className = `word-bubble absolute flex flex-col items-center pointer-events-none select-none`;
 
       card.innerHTML = `
@@ -775,7 +766,6 @@
       let bestX = minX + Math.random() * (maxX - minX);
       let maxDist = -1;
 
-      // 採樣多組隨機位置，選出與頂部 (y < 130) 現有字塊間距最大的安全位置
       for (let attempt = 0; attempt < 14; attempt++) {
         const candidateX = minX + Math.random() * (maxX - minX);
         let nearestDist = 9999;
@@ -784,7 +774,7 @@
         for (const w of gameState.words) {
           if (w.y < 130) {
             const dist = Math.abs(w.x - candidateX);
-            if (dist < 80) { // 80px 內視為過近重疊
+            if (dist < 80) {
               collides = true;
             }
             if (dist < nearestDist) {
@@ -802,7 +792,6 @@
       }
 
       const posX = bestX;
-
       card.style.left = `${posX}px`;
       card.style.top = `-95px`;
       wordContainer.appendChild(card);
@@ -860,7 +849,6 @@
       setInputErrorState(false);
       updateInputBufferDisplay();
 
-      // 清空其它字卡的按鍵選中進度
       gameState.words.forEach(w => {
         w.typedIndex = 0;
         renderWordBadges(w);
@@ -884,7 +872,7 @@
         return;
       }
 
-      // 1. 繁體中文全字比對（若直接打入繁體中文字選字）
+      // 1. 繁體中文全字比對
       for (let i = 0; i < gameState.words.length; i++) {
         const w = gameState.words[i];
         if (box.value.includes(w.char)) {
@@ -893,7 +881,7 @@
         }
       }
 
-      // 2. 英文對應鍵完整比對（如天輸入 wu0，亦相容 wu0 加空白）
+      // 2. 英文對應鍵完整比對（優先消除落得最低的字）
       let exactMatchIndex = -1;
       let maxY = -9999;
       for (let i = 0; i < gameState.words.length; i++) {
@@ -911,7 +899,7 @@
         return;
       }
 
-      // 3. 部分前綴按鍵檢查（例如打 w 或 wu，天字卡上的字母逐步亮綠燈）
+      // 3. 部分前綴按鍵檢查
       let hasPrefixMatch = false;
       let targetPrefixWord = null;
       let bestY = -9999;
@@ -930,7 +918,6 @@
         setInputErrorState(false);
         sound.playKeyStroke();
 
-        // 僅將優先度最高（即最下方）的目標字卡高亮更新
         gameState.words.forEach(w => {
           if (w === targetPrefixWord) {
             w.typedIndex = rawVal.length;
@@ -940,7 +927,7 @@
           renderWordBadges(w);
         });
       } else {
-        // 4. 按錯鍵：維持輸入內容並泛紅警示，學生必須使用 Backspace 刪除重按
+        // 4. 按錯鍵：維持輸入內容並泛紅警示
         setInputErrorState(true);
         sound.playMiss();
         gameState.misses++;
@@ -991,7 +978,6 @@
         evaluateCurrentInput();
       });
 
-      // 支援點擊舞台任何地方自動聚焦輸入框
       document.getElementById('gameStage').addEventListener('click', focusInputBox);
       window.addEventListener('click', (e) => {
         if (gameState.active && !e.target.closest('button')) {
@@ -1028,13 +1014,11 @@
       requestAnimationFrame(gameLoop);
     }
 
-    // 重置並返回開始主畫面（點擊右上角重來鍵或結算頁設定鍵）
     function resetToHome() {
       gameState.active = false;
       clearInterval(gameState.timerInterval);
       clearInterval(gameState.spawnInterval);
 
-      // 清空字卡與舞台
       wordContainer.innerHTML = '';
       gameState.words = [];
       particles = [];
@@ -1047,7 +1031,6 @@
       }
       updateInputBufferDisplay();
 
-      // 重置各項指標顯示
       gameState.timeLeft = 180;
       gameState.score = 0;
       gameState.combo = 0;
@@ -1056,7 +1039,6 @@
       gameState.dropped = 0;
       updateStatusUI();
 
-      // 切換遮罩層
       document.getElementById('resultOverlay').classList.add('hidden');
       document.getElementById('startOverlay').classList.remove('hidden');
     }
@@ -1138,7 +1120,6 @@
       document.getElementById('finalMisses').textContent = gameState.misses;
       document.getElementById('finalDropped').textContent = gameState.dropped;
 
-      // 結算時更新顯示本次使用的競賽模式
       const modeNames = {
         slow: '暖身速',
         normal: '標準競賽速',
@@ -1178,7 +1159,6 @@
       resizeCanvas();
       setupInputListeners();
 
-      // 難度選擇切換
       document.querySelectorAll('.speed-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           document.querySelectorAll('.speed-btn').forEach(b => {
@@ -1187,3 +1167,20 @@
           const speed = btn.getAttribute('data-speed');
           gameState.speedMode = speed;
           btn.className = 'speed-btn flex-1 py-1.5 rounded-xl text-xs font-black bg-amber-500 text-white border-2 border-amber-600 ring-2 ring-amber-300';
+        });
+      });
+
+      document.getElementById('btnStartGame').addEventListener('click', startGame);
+      document.getElementById('btnRestart').addEventListener('click', startGame);
+      document.getElementById('btnHeaderReset').addEventListener('click', resetToHome);
+      document.getElementById('btnBackHome').addEventListener('click', resetToHome);
+
+      const soundBtn = document.getElementById('soundBtn');
+      soundBtn.addEventListener('click', () => {
+        sound.enabled = !sound.enabled;
+        soundBtn.textContent = sound.enabled ? '🔊' : '🔇';
+      });
+    });
+  </script>
+</body>
+</html>
