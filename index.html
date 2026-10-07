@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🍁 楓樹校園打字王 - 高年級打字競賽</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .font-game {
+      font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+    }
+    @keyframes fallLeaf {
+      0% { transform: translateY(-30px) rotate(0deg); opacity: 0.7; }
+      100% { transform: translateY(105vh) rotate(360deg); opacity: 0.12; }
+    }
+    .leaf-1 { animation: fallLeaf 14s linear infinite; left: 6%; }
+    .leaf-2 { animation: fallLeaf 18s linear infinite 5s; left: 48%; }
+    .leaf-3 { animation: fallLeaf 15s linear infinite 9s; left: 88%; }
+    
+    .word-bubble {
+      transition: transform 0.1s ease;
+      will-change: transform, top;
+    }
+    .word-bubble.error-shake .char-circle {
+      animation: shake 0.22s ease-in-out;
+      border-color: #ef4444 !important;
+      box-shadow: 0 0 14px rgba(239, 68, 68, 0.7) !important;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+    .char-circle {
+      transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.12s;
+    }
+    .float-text {
+      position: absolute;
+      font-weight: 900;
+      pointer-events: none;
+      animation: floatUp 0.65s ease-out forwards;
+      z-index: 50;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(0.9); opacity: 1; }
+      100% { transform: translateY(-38px) scale(1.1); opacity: 0; }
+    }
+    .btn-3d {
+      transition: all 0.1s ease;
+      box-shadow: 0 3px 0 #b45309;
+    }
+    .btn-3d:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #b45309;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-b from-amber-100 via-orange-50 to-amber-100 h-screen w-screen overflow-hidden flex flex-col justify-between relative text-amber-950 p-2 sm:p-2.5">
+
+  <!-- 背景飄浮楓葉動畫 -->
+  <div class="leaf-1 absolute text-amber-500/50 pointer-events-none text-4xl">🍁</div>
+  <div class="leaf-2 absolute text-orange-500/40 pointer-events-none text-5xl">🍂</div>
+  <div class="leaf-3 absolute text-amber-600/40 pointer-events-none text-4xl">🍁</div>
+
+  <!-- 頂部資訊列：包含新增的隨時重來鍵 -->
+  <header class="w-full mx-auto px-2 py-1 z-20 flex items-center justify-between gap-2 max-w-[98vw]">
+    <!-- 左側：標題與競賽標籤 -->
+    <div class="flex items-center gap-2 bg-white/95 backdrop-blur-md px-3 py-1 rounded-xl shadow-sm border border-amber-300">
+      <span class="text-xl sm:text-2xl">🍁</span>
+      <div>
+        <h1 class="text-sm sm:text-base font-black tracking-wide text-amber-950 font-game leading-tight flex items-center gap-1.5">
+          楓樹校園打字王
+          <span class="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-xs">高年級全螢幕競賽</span>
+        </h1>
+        <div class="text-[10px] text-amber-800 font-semibold hidden lg:block leading-none mt-0.5">敲英文字母對應鍵（例：天➜wu0），錯鍵按 Backspace 刪除；亦可直接選字消除</div>
+      </div>
+    </div>
+
+    <!-- 中間：即時競賽數據面板 -->
+    <div class="flex items-center gap-1.5 sm:gap-2.5">
+      <!-- 打對字數 -->
+      <div class="bg-white/95 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-xl shadow-xs border border-emerald-400 text-center min-w-[65px] sm:min-w-[80px]">
+        <span class="text-[10px] text-emerald-800 font-black block leading-none">打對字數</span>
+        <span id="hitsText" class="text-lg sm:text-xl font-black text-emerald-600 font-game leading-none">0</span>
+      </div>
+
+      <!-- 得分 -->
+      <div class="bg-white/95 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-xl shadow-xs border border-amber-300 text-center min-w-[65px] sm:min-w-[80px]">
+        <span class="text-[10px] text-amber-800 font-black block leading-none">競賽得分</span>
+        <span id="scoreText" class="text-lg sm:text-xl font-black text-amber-600 font-game leading-none">0</span>
+      </div>
+
+      <!-- 連擊 Combo -->
+      <div class="bg-white/95 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-xl shadow-xs border border-amber-300 text-center min-w-[60px] sm:min-w-[75px] relative">
+        <span class="text-[10px] text-amber-800 font-black block leading-none">連擊數</span>
+        <span id="comboText" class="text-lg sm:text-xl font-black text-rose-500 font-game leading-none">0</span>
+        <div id="comboFire" class="absolute -top-2.5 -right-1.5 text-base hidden animate-bounce">🔥</div>
+      </div>
+
+      <!-- 準確率 -->
+      <div class="hidden sm:block bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-xl shadow-xs border border-amber-300 text-center min-w-[68px]">
+        <span class="text-[10px] text-amber-800 font-black block leading-none">準確率</span>
+        <span id="accuracyText" class="text-lg sm:text-xl font-black text-teal-600 font-game leading-none">100%</span>
+      </div>
+    </div>
+
+    <!-- 右側：計時器、音效與隨時重來鍵 -->
+    <div class="flex items-center gap-1.5">
+      <div id="statusContainer" class="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-xl shadow-xs border border-amber-400 flex items-center gap-1 min-w-[85px] justify-center">
+        <span class="text-base">⏳</span>
+        <span id="timerText" class="text-lg sm:text-xl font-black text-amber-950 font-game">03:00</span>
+      </div>
+
+      <!-- 隨時回到開始畫面的重來鍵 -->
+      <button id="btnHeaderReset" class="btn-3d px-2.5 py-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl shadow font-black text-xs sm:text-sm flex items-center gap-1 transition" title="立即放棄並重設比賽">
+        <span>🔄 重來</span>
+      </button>
+
+      <button id="soundBtn" class="p-1.5 bg-white/95 hover:bg-amber-100 text-amber-900 rounded-xl shadow-xs border border-amber-300 transition text-sm" title="開關音效">
+        🔊
+      </button>
+    </div>
+  </header>
+
+  <!-- 主要競賽舞台：全螢幕寬高比例最大化 -->
+  <main id="gameStage" class="relative flex-1 w-full mx-auto overflow-hidden rounded-2xl bg-amber-50/80 backdrop-blur-xs border-2 border-amber-300 shadow-inner my-1 max-w-[98vw]">
+    
+    <!-- 警戒底線 -->
+    <div class="absolute bottom-4 left-0 right-0 h-1 border-b-2 border-dashed border-rose-400/80 pointer-events-none flex justify-between items-center px-4">
+      <span class="text-[10px] sm:text-xs font-black text-rose-700 bg-rose-100/90 px-2 py-0.5 rounded shadow-xs">⚠️ 警戒底線：別讓漢字墜落！</span>
+      <span class="text-[10px] sm:text-xs font-black text-rose-700 bg-rose-100/90 px-2 py-0.5 rounded shadow-xs">觸底歸零連擊</span>
+    </div>
+
+    <!-- 動態生成字塊容器 -->
+    <div id="wordContainer" class="absolute inset-0 w-full h-full pointer-events-none"></div>
+
+    <!-- 粒子特效 Canvas -->
+    <canvas id="particleCanvas" class="absolute inset-0 pointer-events-none w-full h-full z-10"></canvas>
+
+    <!-- 打字回饋浮動特效文字容器 -->
+    <div id="feedbackContainer" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
+
+    <!-- 比賽開始畫面 -->
+    <div id="startOverlay" class="absolute inset-0 z-40 bg-amber-950/70 backdrop-blur-sm flex items-center justify-center p-3">
+      <div class="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full text-center shadow-2xl border-4 border-amber-400">
+        <div class="text-4xl mb-1.5 animate-bounce">🍁 🏆</div>
+        <h2 class="text-2xl sm:text-3xl font-black text-amber-950 mb-0.5">楓樹校園打字王</h2>
+        <p class="text-amber-800 text-xs sm:text-sm font-bold mb-3.5">高年級極限競賽 (全場計時 3 分鐘)</p>
+
+        <!-- 競賽規則提示 -->
+        <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200 text-left text-xs text-amber-900 mb-4 leading-relaxed space-y-1.5">
+          <p class="font-bold flex items-center gap-1.5"><span class="text-emerald-600 font-black">✔</span> 打字卡下方的英文對應鍵（例「天」按 <kbd class="px-1 bg-white border rounded">w</kbd><kbd class="px-1 bg-white border rounded">u</kbd><kbd class="px-1 bg-white border rounded">0</kbd>）。</p>
+          <p class="font-bold flex items-center gap-1.5 text-rose-700"><span class="text-rose-600 font-black">⚠️</span> 按錯鍵輸入框會泛紅警示，請敲擊 <kbd class="px-1 bg-white border rounded text-amber-950">Backspace</kbd> 刪除修正！</p>
+          <p class="font-bold flex items-center gap-1.5"><span class="text-emerald-600 font-black">✔</span> 亦可直接在下方打字框輸入繁體中文選字消除。</p>
+          <p class="font-bold flex items-center gap-1.5 text-amber-800"><span class="text-amber-600 font-black">🔄</span> 競賽期間可隨時點擊右上角「重來」回此主畫面重新開始。</p>
+        </div>
+
+        <!-- 難度速度調整 -->
+        <div class="mb-4 text-left">
+          <label class="text-xs font-black text-amber-900 block mb-1">競賽下落速度：</label>
+          <div class="flex gap-2">
+            <button type="button" data-speed="slow" class="speed-btn flex-1 py-1.5 rounded-xl text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">暖身速</button>
+            <button type="button" data-speed="normal" class="speed-btn flex-1 py-1.5 rounded-xl text-xs font-black bg-amber-500 text-white border-2 border-amber-600 ring-2 ring-amber-300">標準競賽速</button>
+            <button type="button" data-speed="fast" class="speed-btn flex-1 py-1.5 rounded-xl text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">高手極速</button>
+          </div>
+        </div>
+
+        <!-- 開始比賽按鈕 -->
+        <button type="button" id="btnStartGame" class="btn-3d w-full py-3 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white text-xl font-black rounded-2xl shadow-lg hover:from-amber-600 hover:to-orange-600 transition flex items-center justify-center gap-2">
+          <span>🚀 開始比賽 (3分鐘)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 競賽結算畫面 -->
+    <div id="resultOverlay" class="absolute inset-0 z-40 bg-amber-950/75 backdrop-blur-sm hidden flex items-center justify-center p-3">
+      <div class="bg-white rounded-3xl p-5 sm:p-6 max-w-lg w-full text-center shadow-2xl border-4 border-amber-400 relative">
+        <div id="resultBadge" class="text-4xl mb-1">🥇</div>
+        <h2 id="resultTitle" class="text-xl sm:text-2xl font-black text-amber-950 mb-0.5">比賽結束！</h2>
+        <!-- 結算顯示遊玩模式標籤 -->
+        <div class="flex items-center justify-center mb-1.5">
+          <span id="finalModeBadge" class="bg-amber-100 text-amber-900 border border-amber-300 text-xs px-3 py-0.5 rounded-full font-black shadow-2xs">
+            🎯 競賽模式：標準競賽速
+          </span>
+        </div>
+        <p id="resultSubtitle" class="text-amber-800 text-xs mb-3">恭喜完賽！以下是你的 3 分鐘競賽成績：</p>
+
+        <!-- 成績牌 -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 mb-3">
+          <div class="bg-emerald-50 p-2 rounded-xl border border-emerald-300">
+            <div class="text-[10px] text-emerald-800 font-extrabold">打對字數</div>
+            <div id="finalHitsCount" class="text-lg sm:text-xl font-black text-emerald-600 font-game">0</div>
+          </div>
+          <div class="bg-amber-50 p-2 rounded-xl border border-amber-300">
+            <div class="text-[10px] text-amber-800 font-extrabold">總得分</div>
+            <div id="finalScore" class="text-lg sm:text-xl font-black text-amber-600 font-game">0</div>
+          </div>
+          <div class="bg-rose-50 p-2 rounded-xl border border-rose-300">
+            <div class="text-[10px] text-rose-800 font-extrabold">最高連擊</div>
+            <div id="finalCombo" class="text-lg sm:text-xl font-black text-rose-600 font-game">0</div>
+          </div>
+          <div class="bg-orange-50 p-2 rounded-xl border border-orange-300">
+            <div class="text-[10px] text-orange-800 font-extrabold">字/分(WPM)</div>
+            <div id="finalWpm" class="text-lg sm:text-xl font-black text-orange-600 font-game">0</div>
+          </div>
+          <div class="bg-teal-50 p-2 rounded-xl border border-teal-300 col-span-2 sm:col-span-1">
+            <div class="text-[10px] text-teal-800 font-extrabold">準確率</div>
+            <div id="finalAcc" class="text-lg sm:text-xl font-black text-teal-600 font-game">100%</div>
+          </div>
+        </div>
+
+        <div class="bg-amber-50 p-2 rounded-xl text-amber-900 text-xs font-bold mb-4 flex justify-around border border-amber-200">
+          <span>正確擊中：<b id="finalHits" class="text-emerald-700">0</b> 個</span>
+          <span>按錯重試：<b id="finalMisses" class="text-rose-600">0</b> 次</span>
+          <span>觸底掉落：<b id="finalDropped" class="text-amber-800">0</b> 個</span>
+        </div>
+
+        <div class="flex gap-2.5">
+          <button type="button" id="btnRestart" class="btn-3d flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-base rounded-xl shadow hover:from-amber-600 hover:to-orange-600 transition">
+            🔄 再賽一局
+          </button>
+          <button type="button" id="btnBackHome" class="btn-3d px-4 py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-950 font-bold rounded-xl transition border border-amber-300 text-xs sm:text-sm">
+            ⚙️ 重新設定
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 底部精簡輸入區：全螢幕寬高比例，輸入文字、字母即時顯示 -->
+  <footer class="w-full mx-auto px-2 pb-1.5 pt-0.5 z-20 max-w-[98vw]">
+    <div class="bg-white/95 backdrop-blur-md rounded-xl p-2 shadow-sm border border-amber-300 flex flex-col sm:flex-row items-center gap-2">
+      <div id="inputBoxWrapper" class="flex items-center gap-2 flex-1 w-full bg-amber-50/80 border-2 border-amber-400 px-3 py-1 rounded-xl focus-within:border-amber-600 focus-within:ring-2 focus-within:ring-amber-300 transition shadow-inner">
+        <span id="inputStatusIcon" class="text-lg">✍️</span>
+        <div class="flex-1 relative flex items-center">
+          <input 
+            type="text" 
+            id="typeInputBox" 
+            autocomplete="off" 
+            autocorrect="off" 
+            autocapitalize="off" 
+            spellcheck="false"
+            placeholder="在此輸入鍵盤對應英數（如天按 wu0），或打繁體中文選字..." 
+            class="w-full bg-transparent text-amber-950 text-base sm:text-lg font-black font-mono tracking-wider outline-none placeholder:text-amber-800/50 placeholder:text-xs placeholder:font-sans"
+          />
+        </div>
+      </div>
+
+      <!-- 目前已敲擊按鍵緩衝區即時顯示 -->
+      <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+        <div id="inputHintBadge" class="bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-300 text-xs font-black text-amber-900 whitespace-nowrap flex items-center gap-1.5">
+          <span>鍵盤緩衝：</span>
+          <span id="currentPressedKey" class="text-amber-950 bg-white px-2 py-0.5 rounded border border-amber-300 font-mono tracking-widest min-w-[50px] text-center font-black">空</span>
+        </div>
+        <div id="inputHelpTip" class="text-[11px] text-amber-900 font-bold bg-amber-50 px-2 py-1 rounded-lg border border-amber-200 whitespace-nowrap hidden md:block">
+          💡 打錯鍵請按 <kbd class="bg-white px-1 py-0.5 rounded border border-amber-300 font-mono text-amber-950 font-black">Backspace</kbd> 退回重打
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    /* 音效管理器 (Web Audio API) */
+    class SoundManager {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playKeyStroke() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(580, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(750, this.ctx.currentTime + 0.04);
+          gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.05);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.055);
+        } catch(e) {}
+      }
+
+      playHit(combo = 0) {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          
+          const baseFreq = 440;
+          const noteFreq = baseFreq * Math.pow(1.05946, Math.min(combo, 15));
+          
+          osc.frequency.setValueAtTime(noteFreq, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(noteFreq * 1.5, this.ctx.currentTime + 0.12);
+          
+          gain.gain.setValueAtTime(0.24, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.15);
+          
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.16);
+        } catch(e) {}
+      }
+
+      playMiss() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(90, this.ctx.currentTime + 0.15);
+          
+          gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.15);
+          
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.16);
+        } catch(e) {}
+      }
+
+      playDrop() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(240, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(70, this.ctx.currentTime + 0.22);
+          
+          gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.22);
+          
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.23);
+        } catch(e) {}
+      }
+
+      playGameover() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+        try {
+          const notes = [440, 392, 349, 293];
+          notes.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.12);
+            gain.gain.setValueAtTime(0.2, this.ctx.currentTime + idx * 0.12);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.12 + 0.2);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(this.ctx.currentTime + idx * 0.12);
+            osc.stop(this.ctx.currentTime + idx * 0.12 + 0.22);
+          });
+        } catch(e) {}
+      }
+    }
+
+    const sound = new SoundManager();
+
+    // 專為國小高年級擴充的豐富漢字庫（80+常用字詞，注音與大千鍵盤對應無誤）
+    const PRIMARY_WORDS = [
+      { char: '天', zhuyin: 'ㄊㄧㄢ', keys: ['w', 'u', '0'], keyTokens: [{ k: 'w', z: 'ㄊ' }, { k: 'u', z: 'ㄧ' }, { k: '0', z: 'ㄢ' }] },
+      { char: '地', zhuyin: 'ㄉㄧˋ', keys: ['2', 'u', '4'], keyTokens: [{ k: '2', z: 'ㄉ' }, { k: 'u', z: 'ㄧ' }, { k: '4', z: 'ˋ' }] },
+      { char: '學', zhuyin: 'ㄒㄩㄝˊ', keys: ['v', 'm', ',', '6'], keyTokens: [{ k: 'v', z: 'ㄒ' }, { k: 'm', z: 'ㄩ' }, { k: ',', z: 'ㄝ' }, { k: '6', z: 'ˊ' }] },
+      { char: '校', zhuyin: 'ㄒㄧㄠˋ', keys: ['v', 'u', 'l', '4'], keyTokens: [{ k: 'v', z: 'ㄒ' }, { k: 'u', z: 'ㄧ' }, { k: 'l', z: 'ㄠ' }, { k: '4', z: 'ˋ' }] },
+      { char: '楓', zhuyin: 'ㄈㄥ', keys: ['z', '/'], keyTokens: [{ k: 'z', z: 'ㄈ' }, { k: '/', z: 'ㄥ' }] },
+      { char: '樹', zhuyin: 'ㄕㄨˋ', keys: ['g', 'j', '4'], keyTokens: [{ k: 'g', z: 'ㄕ' }, { k: 'j', z: 'ㄨ' }, { k: '4', z: 'ˋ' }] },
+      { char: '競', zhuyin: 'ㄐㄧㄥˋ', keys: ['r', 'u', '/', '4'], keyTokens: [{ k: 'r', z: 'ㄐ' }, { k: 'u', z: 'ㄧ' }, { k: '/', z: 'ㄥ' }, { k: '4', z: 'ˋ' }] },
+      { char: '賽', zhuyin: 'ㄙㄞˋ', keys: ['n', '9', '4'], keyTokens: [{ k: 'n', z: 'ㄙ' }, { k: '9', z: 'ㄞ' }, { k: '4', z: 'ˋ' }] },
+      { char: '勇', zhuyin: 'ㄩㄥˇ', keys: ['m', '/', '3'], keyTokens: [{ k: 'm', z: 'ㄩ' }, { k: '/', z: 'ㄥ' }, { k: '3', z: 'ˇ' }] },
+      { char: '敢', zhuyin: 'ㄍㄢˇ', keys: ['e', '0', '3'], keyTokens: [{ k: 'e', z: 'ㄍ' }, { k: '0', z: 'ㄢ' }, { k: '3', z: 'ˇ' }] },
+      { char: '智', zhuyin: 'ㄓˋ', keys: ['5', '4'], keyTokens: [{ k: '5', z: 'ㄓ' }, { k: '4', z: 'ˋ' }] },
+      { char: '慧', zhuyin: 'ㄏㄨㄟˋ', keys: ['c', 'j', 'o', '4'], keyTokens: [{ k: 'c', z: 'ㄏ' }, { k: 'j', z: 'ㄨ' }, { k: 'o', z: 'ㄟ' }, { k: '4', z: 'ˋ' }] },
+      { char: '希', zhuyin: 'ㄒㄧ', keys: ['v', 'u'], keyTokens: [{ k: 'v', z: 'ㄒ' }, { k: 'u', z: 'ㄧ' }] },
+      { char: '望', zhuyin: 'ㄨㄤˋ', keys: ['j', ';', '4'], keyTokens: [{ k: 'j', z: 'ㄨ' }, { k: ';', z: 'ㄤ' }, { k: '4', z: 'ˋ' }] },
+      { char: '快', zhuyin: 'ㄎㄨㄞˋ', keys: ['d', 'j', '9', '4'], keyTokens: [{ k: 'd', z: 'ㄎ' }, { k: 'j', z: 'ㄨ' }, { k: '9', z: 'ㄞ' }, { k: '4', z: 'ˋ' }] },
+      { char: '樂', zhuyin: 'ㄌㄜˋ', keys: ['x', 'k', '4'], keyTokens: [{ k: 'x', z: 'ㄌ' }, { k: 'k', z: 'ㄜ' }, { k: '4', z: 'ˋ' }] },
+      { char: '成', zhuyin: 'ㄔㄥˊ', keys: ['t', '/', '6'], keyTokens: [{ k: 't', z: 'ㄔ' }, { k: '/', z: 'ㄥ' }, { k: '6', z: 'ˊ' }] },
+      { char: '功', zhuyin: 'ㄍㄨㄥ', keys: ['e', 'j', '/'], keyTokens: [{ k: 'e', z: 'ㄍ' }, { k: 'j', z: 'ㄨ' }, { k: '/', z: 'ㄥ' }] },
+      { char: '努', zhuyin: 'ㄋㄨˇ', keys: ['s', 'j', '3'], keyTokens: [{ k: 's', z: 'ㄋ' }, { k: 'j', z: 'ㄨ' }, { k: '3', z: 'ˇ' }] },
+      { char: '力', zhuyin: 'ㄌㄧˋ', keys: ['x', 'u', '4'], keyTokens: [{ k: 'x', z: 'ㄌ' }, { k: 'u', z: 'ㄧ' }, { k: '4', z: 'ˋ' }] },
+      { char: '晨', zhuyin: 'ㄔㄣˊ', keys: ['t', 'p', '6'], keyTokens: [{ k: 't', z: 'ㄔ' }, { k: 'p', z: 'ㄣ' }, { k: '6', z: 'ˊ' }] },
+      { char: '曦', zhuyin: 'ㄒㄧ', keys: ['v', 'u'], keyTokens: [{ k: 'v', z: 'ㄒ' }, { k: 'u', z: 'ㄧ' }] },
+      { char: '溫', zhuyin: 'ㄨㄣ', keys: ['j', 'p'], keyTokens: [{ k: 'j', z: 'ㄨ' }, { k: 'p', z: 'ㄣ' }] },
+      { char: '暖', zhuyin: 'ㄋㄨㄢˇ', keys: ['s', 'j', '0', '3'], keyTokens: [{ k: 's', z: 'ㄋ' }, { k: 'j', z: 'ㄨ' }, { k: '0', z: 'ㄢ' }, { k: '3', z: 'ˇ' }] },
+      { char: '陽', zhuyin: 'ㄧㄤˊ', keys: ['u', ';', '6'], keyTokens: [{ k: 'u', z: 'ㄧ' }, { k: ';', z: 'ㄤ' }, { k: '6', z: 'ˊ' }] },
+      { char: '光', zhuyin: 'ㄍㄨㄤ', keys: ['e', 'j', ';'], keyTokens: [{ k: 'e', z: 'ㄍ' }, { k: 'j', z: 'ㄨ' }, { k: ';', z: 'ㄤ' }] },
+      { char: '飛', zhuyin: 'ㄈㄟ', keys: ['z', 'o'], keyTokens: [{ k: 'z', z: 'ㄈ' }, { k: 'o', z: 'ㄟ' }] },
+      { char: '翔', zhuyin: 'ㄒㄧㄤˊ', keys: ['v', 'u', ';', '6'], keyTokens: [{ k: 'v', z: 'ㄒ' }, { k: 'u', z: 'ㄧ' }, { k: ';', z: 'ㄤ' }, { k: '6', z: 'ˊ' }] },
+      { char: '團', zhuyin: 'ㄊㄨㄢˊ', keys: ['w', 'j', '0', '6'], keyTokens: [{ k: 'w', z: 'ㄊ' }, { k: 'j', z: 'ㄨ' }, { k: '0', z: 'ㄢ' }, { k: '6', z: 'ˊ' }] },
+      { char: '結', zhuyin: 'ㄐㄧㄝˊ', keys: ['r', 'u', ',', '6'], keyTokens: [{ k: 'r', z: 'ㄐ' }, { k: 'u', z: 'ㄧ' }, { k: ',', z: 'ㄝ' }, { k: '6', z: 'ˊ' }] },
+      { char: '書', zhuyin: 'ㄕㄨ', keys: ['g', 'j'], keyTokens: [{ k: 'g', z: 'ㄕ' }, { k: 'j', z: 'ㄨ' }] },
+      { char: '海', zhuyin: 'ㄏㄞˇ', keys: ['c', '9', '3'], keyTokens: [{ k: 'c', z: 'ㄏ' }, { k: '9', z: 'ㄞ' }, { k: '3', z: 'ˇ' }] },
+      { char: '夢', zhuyin: 'ㄇㄥˋ', keys: ['a', '/', '4'], keyTokens: [{ k: 'a', z: 'ㄇ' }, { k: '/', z: 'ㄥ' }, { k: '4', z: 'ˋ' }] },
+      { char: '想', zhuyin: 'ㄒㄧㄤˇ', keys: ['v', 'u', ';', '3'], keyTokens: [{ k: 'v', z: 'ㄒ' }, { k: 'u', z: 'ㄧ' }, { k: ';', z: 'ㄤ' }, { k: '3', z: 'ˇ' }] },
+      { char: '熱', zhuyin: 'ㄖㄜˋ', keys: ['b', 'k', '4'], keyTokens: [{ k: 'b', z: 'ㄖ' }, { k: 'k', z: 'ㄜ' }, { k: '4', z: 'ˋ' }] },
+      { char: '情', zhuyin: 'ㄑㄧㄥˊ', keys: ['f', 'u', '/', '6'], keyTokens: [{ k: 'f', z: 'ㄑ' }, { k: 'u', z: 'ㄧ' }, { k: '/', z: 'ㄥ' }, { k: '6', z: 'ˊ' }] },
+      { char: '美', zhuyin: 'ㄇㄟˇ', keys: ['a', 'o', '3'], keyTokens: [{ k: 'a', z: 'ㄇ' }, { k: 'o', z: 'ㄟ' }, { k: '3', z: 'ˇ' }] },
+      { char: '好', zhuyin: 'ㄏㄠˇ', keys: ['c', 'l', '3'], keyTokens: [{ k: 'c', z: 'ㄏ' }, { k: 'l', z: 'ㄠ' }, { k: '3', z: 'ˇ' }] },
+      { char: '星', zhuyin: 'ㄒㄧㄥ', keys: ['v', 'u', '/'], keyTokens: [{ k: 'v', z: 'ㄒ' }, { k: 'u', z: 'ㄧ' }, { k: '/', z: 'ㄥ' }] },
+      { char: '空', zhuyin: 'ㄎㄨㄥ', keys: ['d', 'j', '/'], keyTokens: [{ k: 'd', z: 'ㄎ' }, { k: 'j', z: 'ㄨ' }, { k: '/', z: 'ㄥ' }] },
+      { char: '浩', zhuyin: 'ㄏㄠˋ', keys: ['c', 'l', '4'], keyTokens: [{ k: 'c', z: 'ㄏ' }, { k: 'l', z: 'ㄠ' }, { k: '4', z: 'ˋ' }] },
+      { char: '瀚', zhuyin: 'ㄏㄢˋ', keys: ['c', '0', '4'], keyTokens: [{ k: 'c', z: 'ㄏ' }, { k: '0', z: 'ㄢ' }, { k: '4', z: 'ˋ' }] },
+      { char: '堅', zhuyin: 'ㄐㄧㄢ', keys: ['r', 'u', '0'], keyTokens: [{ k: 'r', z: 'ㄐ' }, { k: 'u', z: 'ㄧ' }, { k: '0', z: 'ㄢ' }] },
+      { char: '持', zhuyin: 'ㄔˊ', keys: ['t', '6'], keyTokens: [{ k: 't', z: 'ㄔ' }, { k: '6', z: 'ˊ' }] },
+      { char: '奮', zhuyin: 'ㄈㄣˋ', keys: ['z', 'p', '4'], keyTokens: [{ k: 'z', z: 'ㄈ' }, { k: 'p', z: 'ㄣ' }, { k: '4', z: 'ˋ' }] },
+      { char: '鬥', zhuyin: 'ㄉㄡˋ', keys: ['2', '.', '4'], keyTokens: [{ k: '2', z: 'ㄉ' }, { k: '.', z: 'ㄡ' }, { k: '4', z: 'ˋ' }] },
+      { char: '創', zhuyin: 'ㄔㄨㄤˋ', keys: ['t', 'j', ';', '4'], keyTokens: [{ k: 't', z: 'ㄔ' }, { k: 'j', z: 'ㄨ' }, { k: ';', z: 'ㄤ' }, { k: '4', z: 'ˋ' }] },
+      { char: '造', zhuyin: 'ㄗㄠˋ', keys: ['y', 'l', '4'], keyTokens: [{ k: 'y', z: 'ㄗ' }, { k: 'l', z: 'ㄠ' }, { k: '4', z: 'ˋ' }] },
+      { char: '未', zhuyin: 'ㄨㄟˋ', keys: ['j', 'o', '4'], keyTokens: [{ k: 'j', z: 'ㄨ' }, { k: 'o', z: 'ㄟ' }, { k: '4', z: 'ˋ' }] },
+      { char: '來', zhuyin: 'ㄌㄞˊ', keys: ['x', '9', '6'], keyTokens: [{ k: 'x', z: 'ㄌ' }, { k: '9', z: 'ㄞ' }, { k: '6', z: 'ˊ' }] },
+      { char: '友', zhuyin: 'ㄧㄡˇ', keys: ['u', '.', '3'], keyTokens: [{ k: 'u', z: 'ㄧ' }, { k: '.', z: 'ㄡ' }, { k: '3', z: 'ˇ' }] },
+      { char: '愛', zhuyin: 'ㄞˋ', keys: ['9', '4'], keyTokens: [{ k: '9', z: 'ㄞ' }, { k: '4', z: 'ˋ' }] },
+      { char: '誠', zhuyin: 'ㄔㄥˊ', keys: ['t', '/', '6'], keyTokens: [{ k: 't', z: 'ㄔ' }, { k: '/', z: 'ㄥ' }, { k: '6', z: 'ˊ' }] },
+      { char: '實', zhuyin: 'ㄕˊ', keys: ['g', '6'], keyTokens: [{ k: 'g', z: 'ㄕ' }, { k: '6', z: 'ˊ' }] },
+      { char: '尊', zhuyin: 'ㄗㄨㄣ', keys: ['y', 'j', 'p'], keyTokens: [{ k: 'y', z: 'ㄗ' }, { k: 'j', z: 'ㄨ' }, { k: 'p', z: 'ㄣ' }] },
+      { char: '重', zhuyin: 'ㄓㄨㄥˋ', keys: ['5', 'j', '/', '4'], keyTokens: [{ k: '5', z: 'ㄓ' }, { k: 'j', z: 'ㄨ' }, { k: '/', z: 'ㄥ' }, { k: '4', z: 'ˋ' }] },
+      { char: '合', zhuyin: 'ㄏㄜˊ', keys: ['c', 'k', '6'], keyTokens: [{ k: 'c', z: 'ㄏ' }, { k: 'k', z: 'ㄜ' }, { k: '6', z: 'ˊ' }] },
+      { char: '作', zhuyin: 'ㄗㄨㄛˋ', keys: ['y', 'j', 'i', '4'], keyTokens: [{ k: 'y', z: 'ㄗ' }, { k: 'j', z: 'ㄨ' }, { k: 'i', z: 'ㄛ' }, { k: '4', z: 'ˋ' }] },
+      { char: '開', zhuyin: 'ㄎㄞ', keys: ['d', '9'], keyTokens: [{ k: 'd', z: 'ㄎ' }, { k: '9', z: 'ㄞ' }] },
+      { char: '朗', zhuyin: 'ㄌㄤˇ', keys: ['x', ';', '3'], keyTokens: [{ k: 'x', z: 'ㄌ' }, { k: ';', z: 'ㄤ' }, { k: '3', z: 'ˇ' }] },
+      { char: '清', zhuyin: 'ㄑㄧㄥ', keys: ['f', 'u', '/'], keyTokens: [{ k: 'f', z: 'ㄑ' }, { k: 'u', z: 'ㄧ' }, { k: '/', z: 'ㄥ' }] },
+      { char: '新', zhuyin: 'ㄒㄧㄣ', keys: ['v', 'u', 'p'], keyTokens: [{ k: 'v', z: 'ㄒ' }, { k: 'u', z: 'ㄧ' }, { k: 'p', z: 'ㄣ' }] },
+      { char: '自', zhuyin: 'ㄗˋ', keys: ['y', '4'], keyTokens: [{ k: 'y', z: 'ㄗ' }, { k: '4', z: 'ˋ' }] },
+      { char: '信', zhuyin: 'ㄒㄧㄣˋ', keys: ['v', 'u', 'p', '4'], keyTokens: [{ k: 'v', z: 'ㄒ' }, { k: 'u', z: 'ㄧ' }, { k: 'p', z: 'ㄣ' }, { k: '4', z: 'ˋ' }] },
+      { char: '超', zhuyin: 'ㄔㄠ', keys: ['t', 'l'], keyTokens: [{ k: 't', z: 'ㄔ' }, { k: 'l', z: 'ㄠ' }] },
+      { char: '越', zhuyin: 'ㄩㄝˋ', keys: ['m', ',', '4'], keyTokens: [{ k: 'm', z: 'ㄩ' }, { k: ',', z: 'ㄝ' }, { k: '4', z: 'ˋ' }] },
+      { char: '榮', zhuyin: 'ㄖㄨㄥˊ', keys: ['b', 'j', '/', '6'], keyTokens: [{ k: 'b', z: 'ㄖ' }, { k: 'j', z: 'ㄨ' }, { k: '/', z: 'ㄥ' }, { k: '6', z: 'ˊ' }] },
+      { char: '耀', zhuyin: 'ㄧㄠˋ', keys: ['u', 'l', '4'], keyTokens: [{ k: 'u', z: 'ㄧ' }, { k: 'l', z: 'ㄠ' }, { k: '4', z: 'ˋ' }] },
+      { char: '金', zhuyin: 'ㄐㄧㄣ', keys: ['r', 'u', 'p'], keyTokens: [{ k: 'r', z: 'ㄐ' }, { k: 'u', z: 'ㄧ' }, { k: 'p', z: 'ㄣ' }] },
+      { char: '牌', zhuyin: 'ㄆㄞˊ', keys: ['q', '9', '6'], keyTokens: [{ k: 'q', z: 'ㄆ' }, { k: '9', z: 'ㄞ' }, { k: '6', z: 'ˊ' }] },
+      { char: '冠', zhuyin: 'ㄍㄨㄢ', keys: ['e', 'j', '0'], keyTokens: [{ k: 'e', z: 'ㄍ' }, { k: 'j', z: 'ㄨ' }, { k: '0', z: 'ㄢ' }] },
+      { char: '軍', zhuyin: 'ㄐㄩㄣ', keys: ['r', 'm', 'p'], keyTokens: [{ k: 'r', z: 'ㄐ' }, { k: 'm', z: 'ㄩ' }, { k: 'p', z: 'ㄣ' }] },
+      { char: '追', zhuyin: 'ㄓㄨㄟ', keys: ['5', 'j', 'o'], keyTokens: [{ k: '5', z: 'ㄓ' }, { k: 'j', z: 'ㄨ' }, { k: 'o', z: 'ㄟ' }] },
+      { char: '求', zhuyin: 'ㄑㄧㄡˊ', keys: ['f', 'u', '.', '6'], keyTokens: [{ k: 'f', z: 'ㄑ' }, { k: 'u', z: 'ㄧ' }, { k: '.', z: 'ㄡ' }, { k: '6', z: 'ˊ' }] },
+      { char: '卓', zhuyin: 'ㄓㄨㄛˊ', keys: ['5', 'j', 'i', '6'], keyTokens: [{ k: '5', z: 'ㄓ' }, { k: 'j', z: 'ㄨ' }, { k: 'i', z: 'ㄛ' }, { k: '6', z: 'ˊ' }] },
+      { char: '越', zhuyin: 'ㄩㄝˋ', keys: ['m', ',', '4'], keyTokens: [{ k: 'm', z: 'ㄩ' }, { k: ',', z: 'ㄝ' }, { k: '4', z: 'ˋ' }] },
+      { char: '博', zhuyin: 'ㄅㄛˊ', keys: ['1', 'i', '6'], keyTokens: [{ k: '1', z: 'ㄅ' }, { k: 'i', z: 'ㄛ' }, { k: '6', z: 'ˊ' }] },
+      { char: '覽', zhuyin: 'ㄌㄢˇ', keys: ['x', '0', '3'], keyTokens: [{ k: 'x', z: 'ㄌ' }, { k: '0', z: 'ㄢ' }, { k: '3', z: 'ˇ' }] },
+      { char: '群', zhuyin: 'ㄑㄩㄣˊ', keys: ['f', 'm', 'p', '6'], keyTokens: [{ k: 'f', z: 'ㄑ' }, { k: 'm', z: 'ㄩ' }, { k: 'p', z: 'ㄣ' }, { k: '6', z: 'ˊ' }] },
+      { char: '書', zhuyin: 'ㄕㄨ', keys: ['g', 'j'], keyTokens: [{ k: 'g', z: 'ㄕ' }, { k: 'j', z: 'ㄨ' }] },
+      { char: '發', zhuyin: 'ㄈㄚ', keys: ['z', '8'], keyTokens: [{ k: 'z', z: 'ㄈ' }, { k: '8', z: 'ㄚ' }] },
+      { char: '展', zhuyin: 'ㄓㄢˇ', keys: ['5', '0', '3'], keyTokens: [{ k: '5', z: 'ㄓ' }, { k: '0', z: 'ㄢ' }, { k: '3', z: 'ˇ' }] },
+      { char: '潛', zhuyin: 'ㄑㄧㄢˊ', keys: ['f', 'u', '0', '6'], keyTokens: [{ k: 'f', z: 'ㄑ' }, { k: 'u', z: 'ㄧ' }, { k: '0', z: 'ㄢ' }, { k: '6', z: 'ˊ' }] },
+      { char: '能', zhuyin: 'ㄋㄥˊ', keys: ['s', '/', '6'], keyTokens: [{ k: 's', z: 'ㄋ' }, { k: '/', z: 'ㄥ' }, { k: '6', z: 'ˊ' }] },
+      { char: '風', zhuyin: 'ㄈㄥ', keys: ['z', '/'], keyTokens: [{ k: 'z', z: 'ㄈ' }, { k: '/', z: 'ㄥ' }] },
+      { char: '景', zhuyin: 'ㄐㄧㄥˇ', keys: ['r', 'u', '/', '3'], keyTokens: [{ k: 'r', z: 'ㄐ' }, { k: 'u', z: 'ㄧ' }, { k: '/', z: 'ㄥ' }, { k: '3', z: 'ˇ' }] },
+      { char: '春', zhuyin: 'ㄔㄨㄣ', keys: ['t', 'j', 'p'], keyTokens: [{ k: 't', z: 'ㄔ' }, { k: 'j', z: 'ㄨ' }, { k: 'p', z: 'ㄣ' }] },
+      { char: '夏', zhuyin: 'ㄒㄧㄚˋ', keys: ['v', 'u', '8', '4'], keyTokens: [{ k: 'v', z: 'ㄒ' }, { k: 'u', z: 'ㄧ' }, { k: '8', z: 'ㄚ' }, { k: '4', z: 'ˋ' }] },
+      { char: '秋', zhuyin: 'ㄑㄧㄡ', keys: ['f', 'u', '.'], keyTokens: [{ k: 'f', z: 'ㄑ' }, { k: 'u', z: 'ㄧ' }, { k: '.', z: 'ㄡ' }] },
+      { char: '冬', zhuyin: 'ㄉㄨㄥ', keys: ['2', 'j', '/'], keyTokens: [{ k: '2', z: 'ㄉ' }, { k: 'j', z: 'ㄨ' }, { k: '/', z: 'ㄥ' }] },
+      { char: '同', zhuyin: 'ㄊㄨㄥˊ', keys: ['w', 'j', '/', '6'], keyTokens: [{ k: 'w', z: 'ㄊ' }, { k: 'j', z: 'ㄨ' }, { k: '/', z: 'ㄥ' }, { k: '6', z: 'ˊ' }] },
+      { char: '心', zhuyin: 'ㄒㄧㄣ', keys: ['v', 'u', 'p'], keyTokens: [{ k: 'v', z: 'ㄒ' }, { k: 'u', z: 'ㄧ' }, { k: 'p', z: 'ㄣ' }] },
+      { char: '協', zhuyin: 'ㄒㄧㄝˊ', keys: ['v', 'u', ',', '6'], keyTokens: [{ k: 'v', z: 'ㄒ' }, { k: 'u', z: 'ㄧ' }, { k: ',', z: 'ㄝ' }, { k: '6', z: 'ˊ' }] }
+    ];
+
+    const gameState = {
+      speedMode: 'normal',
+      active: false,
+      score: 0,
+      combo: 0,
+      maxCombo: 0,
+      hits: 0,
+      misses: 0,
+      dropped: 0,
+      timeLeft: 180, // 3 分鐘 (180秒)
+      totalDuration: 180,
+      words: [],
+      spawnInterval: null,
+      timerInterval: null,
+      spawnDelay: 1100,
+      fallSpeed: 1.75,
+      lastSpawnedChar: ''
+    };
+
+    let particles = [];
+    const canvas = document.getElementById('particleCanvas');
+    const pCtx = canvas.getContext('2d');
+    const wordContainer = document.getElementById('wordContainer');
+    const gameStage = document.getElementById('gameStage');
+    const feedbackContainer = document.getElementById('feedbackContainer');
+    let lastTime = performance.now();
+
+    function resizeCanvas() {
+      if (gameStage && canvas) {
+        canvas.width = gameStage.clientWidth;
+        canvas.height = gameStage.clientHeight;
+      }
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    function createExplosion(x, y) {
+      const count = 18;
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
+        const speed = 2.6 + Math.random() * 4.2;
+        particles.push({
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          size: 3.5 + Math.random() * 4.5,
+          color: ['#f59e0b', '#f97316', '#ef4444', '#10b981', '#fbbf24', '#06b6d4'][Math.floor(Math.random() * 6)],
+          alpha: 1,
+          decay: 0.026 + Math.random() * 0.02
+        });
+      }
+    }
+
+    function updateParticles() {
+      pCtx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.1;
+        p.alpha -= p.decay;
+
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        pCtx.save();
+        pCtx.globalAlpha = p.alpha;
+        pCtx.fillStyle = p.color;
+        pCtx.beginPath();
+        pCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        pCtx.fill();
+        pCtx.restore();
+      }
+      if (gameState.active) {
+        requestAnimationFrame(updateParticles);
+      }
+    }
+
+    function showFloatingText(x, y, text, type = 'hit') {
+      const el = document.createElement('div');
+      el.className = 'float-text ' + (type === 'hit' ? 'text-amber-600 text-lg sm:text-xl' : 'text-rose-600 text-sm sm:text-base');
+      el.textContent = text;
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+      feedbackContainer.appendChild(el);
+      setTimeout(() => {
+        if (el.parentNode) el.parentNode.removeChild(el);
+      }, 650);
+    }
+
+    // 速度設定
+    function applySpeedSettings() {
+      if (gameState.speedMode === 'slow') {
+        gameState.fallSpeed = 1.25;
+        gameState.spawnDelay = 1400;
+      } else if (gameState.speedMode === 'normal') {
+        // 標準競賽模式：速度放慢一歇歇（1.8 -> 1.55），字卡產生頻率微調加速（1100ms -> 980ms），讓畫面上字數稍微多一點點
+        gameState.fallSpeed = 1.55;
+        gameState.spawnDelay = 980;
+      } else if (gameState.speedMode === 'fast') {
+        gameState.fallSpeed = 2.4;
+        gameState.spawnDelay = 780;
+      }
+    }
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function updateStatusUI() {
+      const timerText = document.getElementById('timerText');
+      timerText.textContent = formatTime(gameState.timeLeft);
+      timerText.className = gameState.timeLeft <= 15 
+        ? 'text-lg sm:text-xl font-black text-rose-600 font-game animate-pulse' 
+        : 'text-lg sm:text-xl font-black text-amber-950 font-game';
+
+      document.getElementById('hitsText').textContent = gameState.hits;
+      document.getElementById('scoreText').textContent = gameState.score;
+      document.getElementById('comboText').textContent = gameState.combo;
+      
+      const fireEl = document.getElementById('comboFire');
+      if (gameState.combo >= 5) {
+        fireEl.classList.remove('hidden');
+      } else {
+        fireEl.classList.add('hidden');
+      }
+
+      const totalAttempts = gameState.hits + gameState.misses;
+      const acc = totalAttempts === 0 ? 100 : Math.round((gameState.hits / totalAttempts) * 100);
+      document.getElementById('accuracyText').textContent = `${acc}%`;
+    }
+
+    function updateInputBufferDisplay() {
+      const infoEl = document.getElementById('currentPressedKey');
+      const box = document.getElementById('typeInputBox');
+      const wrapper = document.getElementById('inputBoxWrapper');
+      const icon = document.getElementById('inputStatusIcon');
+      if (!infoEl || !box) return;
+
+      const rawVal = box.value;
+      if (!rawVal) {
+        infoEl.textContent = '空';
+        infoEl.className = 'text-amber-950 bg-white px-2 py-0.5 rounded border border-amber-300 font-mono tracking-widest min-w-[50px] text-center font-black';
+        wrapper.className = 'flex items-center gap-2 flex-1 w-full bg-amber-50/80 border-2 border-amber-400 px-3 py-1 rounded-xl focus-within:border-amber-600 focus-within:ring-2 focus-within:ring-amber-300 transition shadow-inner';
+        icon.textContent = '✍️';
+      } else {
+        infoEl.textContent = rawVal;
+        infoEl.className = 'text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-400 font-mono tracking-widest text-xs sm:text-sm font-black';
+      }
+    }
+
+    function setInputErrorState(isError) {
+      const wrapper = document.getElementById('inputBoxWrapper');
+      const box = document.getElementById('typeInputBox');
+      const icon = document.getElementById('inputStatusIcon');
+      const infoEl = document.getElementById('currentPressedKey');
+
+      if (isError) {
+        wrapper.className = 'flex items-center gap-2 flex-1 w-full bg-rose-50 border-2 border-rose-500 px-3 py-1 rounded-xl ring-2 ring-rose-300 transition shadow-inner';
+        box.classList.add('text-rose-700');
+        icon.textContent = '❌';
+        if (infoEl) {
+          infoEl.className = 'text-rose-700 bg-rose-100 px-2 py-0.5 rounded border border-rose-400 font-mono tracking-widest text-xs sm:text-sm font-black';
+        }
+      } else {
+        wrapper.className = 'flex items-center gap-2 flex-1 w-full bg-emerald-50/80 border-2 border-emerald-400 px-3 py-1 rounded-xl focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-300 transition shadow-inner';
+        box.classList.remove('text-rose-700');
+        icon.textContent = '✍️';
+        if (infoEl && box.value) {
+          infoEl.className = 'text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-400 font-mono tracking-widest text-xs sm:text-sm font-black';
+        }
+      }
+    }
+
+    // 精緻化字卡按鍵渲染（尺寸精緻適中，不遮蔽視野）
+    function renderWordBadges(wordObj) {
+      const container = wordObj.element.querySelector('.key-badges-container');
+      if (!container) return;
+      
+      container.innerHTML = wordObj.keyTokens.map((t, idx) => {
+        const isTyped = idx < wordObj.typedIndex;
+        const isCurrent = idx === wordObj.typedIndex;
+        
+        let badgeClass = 'bg-white/95 text-amber-950 border-amber-300';
+        let keyTextClass = 'text-amber-950 font-bold';
+        let zhuyinTextClass = 'text-orange-600 font-semibold';
+
+        if (isTyped) {
+          badgeClass = 'bg-emerald-500 text-white border-emerald-600 ring-1 ring-emerald-300 scale-105';
+          keyTextClass = 'text-white font-bold';
+          zhuyinTextClass = 'text-emerald-100 font-medium';
+        } else if (isCurrent) {
+          badgeClass = 'bg-amber-300 text-amber-950 border-amber-500 ring-1 ring-amber-400 animate-pulse';
+          keyTextClass = 'text-amber-950 font-black';
+          zhuyinTextClass = 'text-amber-900 font-bold';
+        }
+
+        return `
+          <span class="key-badge inline-flex items-center gap-0.5 px-1 py-0.2 rounded border text-[10px] leading-tight shadow-2xs transition-transform ${badgeClass}">
+            <b class="${keyTextClass} font-mono">${t.k}</b>
+            <span class="${zhuyinTextClass} text-[9px]">${t.z}</span>
+          </span>
+        `;
+      }).join('');
+    }
+
+    function spawnWord() {
+      if (!gameState.active) return;
+      const stageW = gameStage.clientWidth || 900;
+      
+      // 取得目前畫面上已存在字卡的所有 keyStr 與前綴
+      const activeKeyStrs = gameState.words.map(w => w.keyStr);
+      const activeChars = gameState.words.map(w => w.char);
+
+      // 篩選候選字庫：
+      // 1. 不是上一次剛出現的字
+      // 2. 畫面上不可有完全相同的字
+      // 3. 畫面上不可有「前綴完全相同」或「拼音按鍵開頭相同」的同音/諧音字（例如天 wu0 與舔 wu03）
+      let candidates = PRIMARY_WORDS.filter(w => {
+        if (w.char === gameState.lastSpawnedChar) return false;
+        if (activeChars.includes(w.char)) return false;
+
+        for (const existingKey of activeKeyStrs) {
+          // 若兩者有相互前綴重疊，則排除，避免打鍵盤時產生衝突
+          if (existingKey.startsWith(w.keyStr) || w.keyStr.startsWith(existingKey)) {
+            return false;
+          }
+        }
+        return true;
+      });
+
+      // 若字庫過濾後暫無合適字，退回基本不重複字
+      if (candidates.length === 0) {
+        candidates = PRIMARY_WORDS.filter(w => !activeChars.includes(w.char));
+        if (candidates.length === 0) candidates = PRIMARY_WORDS;
+      }
+
+      const wordData = candidates[Math.floor(Math.random() * candidates.length)];
+      gameState.lastSpawnedChar = wordData.char;
+      
+      const bubbleColors = [
+        'bg-amber-50 border-amber-400 text-amber-950 ring-2 ring-amber-200/60',
+        'bg-orange-50 border-orange-400 text-orange-950 ring-2 ring-orange-200/60',
+        'bg-rose-50 border-rose-400 text-rose-950 ring-2 ring-rose-200/60',
+        'bg-yellow-50 border-yellow-400 text-amber-950 ring-2 ring-yellow-200/60',
+        'bg-emerald-50 border-emerald-400 text-emerald-950 ring-2 ring-emerald-200/60'
+      ];
+      const colorScheme = bubbleColors[Math.floor(Math.random() * bubbleColors.length)];
+
+      const card = document.createElement('div');
+      // 圓形氣泡造型（無大外框，中文字用圓圈圈起來，下方為微型提示）
+      card.className = `word-bubble absolute flex flex-col items-center pointer-events-none select-none`;
+
+      card.innerHTML = `
+        <div class="char-circle w-13 h-13 sm:w-15 sm:h-15 rounded-full flex items-center justify-center border-2 sm:border-3 shadow-md ${colorScheme}">
+          <span class="text-2xl sm:text-3xl font-black font-game drop-shadow-2xs leading-none">${wordData.char}</span>
+        </div>
+        <div class="flex flex-col items-center mt-1 gap-0.5 bg-white/90 backdrop-blur-xs px-1.5 py-0.5 rounded-md border border-amber-200/90 shadow-2xs">
+          <span class="text-[10px] font-bold text-amber-800 leading-none">${wordData.zhuyin}</span>
+          <div class="flex items-center gap-0.5 justify-center key-badges-container"></div>
+        </div>
+      `;
+
+      // 防重疊演算法：計算安全的水平 X 座標，避開頂部現存字塊
+      const bubbleWidth = 75;
+      const minX = 15;
+      const maxX = Math.max(minX + 20, stageW - bubbleWidth - 15);
+      
+      let bestX = minX + Math.random() * (maxX - minX);
+      let maxDist = -1;
+
+      // 採樣多組隨機位置，選出與頂部 (y < 130) 現有字塊間距最大的安全位置
+      for (let attempt = 0; attempt < 14; attempt++) {
+        const candidateX = minX + Math.random() * (maxX - minX);
+        let nearestDist = 9999;
+        let collides = false;
+
+        for (const w of gameState.words) {
+          if (w.y < 130) {
+            const dist = Math.abs(w.x - candidateX);
+            if (dist < 80) { // 80px 內視為過近重疊
+              collides = true;
+            }
+            if (dist < nearestDist) {
+              nearestDist = dist;
+            }
+          }
+        }
+
+        if (!collides && nearestDist > maxDist) {
+          maxDist = nearestDist;
+          bestX = candidateX;
+        } else if (attempt === 0) {
+          bestX = candidateX;
+        }
+      }
+
+      const posX = bestX;
+
+      card.style.left = `${posX}px`;
+      card.style.top = `-95px`;
+      wordContainer.appendChild(card);
+
+      const wordObj = {
+        char: wordData.char,
+        zhuyin: wordData.zhuyin,
+        keys: wordData.keys,
+        keyStr: wordData.keys.join('').toLowerCase(),
+        keyTokens: wordData.keyTokens,
+        typedIndex: 0,
+        x: posX,
+        y: -95,
+        element: card
+      };
+
+      renderWordBadges(wordObj);
+      gameState.words.push(wordObj);
+    }
+
+    function removeWord(index) {
+      const w = gameState.words[index];
+      if (w && w.element && w.element.parentNode) {
+        w.element.parentNode.removeChild(w.element);
+      }
+      gameState.words.splice(index, 1);
+    }
+
+    function triggerWordSuccess(targetIndex) {
+      const target = gameState.words[targetIndex];
+      gameState.hits++;
+      gameState.combo++;
+      if (gameState.combo > gameState.maxCombo) {
+        gameState.maxCombo = gameState.combo;
+      }
+
+      const comboBonus = Math.min(gameState.combo * 5, 50);
+      const earnedScore = 20 + comboBonus;
+      gameState.score += earnedScore;
+
+      sound.playHit(gameState.combo);
+      createExplosion(target.x + 30, target.y + 30);
+
+      let praise = `+${earnedScore}`;
+      if (gameState.combo >= 20) praise = `🔥神級手速！ +${earnedScore}`;
+      else if (gameState.combo >= 10) praise = `⚡超速連擊！ +${earnedScore}`;
+      else if (gameState.combo >= 5) praise = `好節奏！ +${earnedScore}`;
+
+      showFloatingText(target.x + 35, target.y, praise, 'hit');
+      removeWord(targetIndex);
+      updateStatusUI();
+
+      const box = document.getElementById('typeInputBox');
+      if (box) box.value = '';
+      setInputErrorState(false);
+      updateInputBufferDisplay();
+
+      // 清空其它字卡的按鍵選中進度
+      gameState.words.forEach(w => {
+        w.typedIndex = 0;
+        renderWordBadges(w);
+      });
+    }
+
+    function evaluateCurrentInput() {
+      if (!gameState.active) return;
+      const box = document.getElementById('typeInputBox');
+      if (!box) return;
+
+      const rawVal = box.value.trim().toLowerCase();
+      updateInputBufferDisplay();
+
+      if (!rawVal) {
+        setInputErrorState(false);
+        gameState.words.forEach(w => {
+          w.typedIndex = 0;
+          renderWordBadges(w);
+        });
+        return;
+      }
+
+      // 1. 繁體中文全字比對（若直接打入繁體中文字選字）
+      for (let i = 0; i < gameState.words.length; i++) {
+        const w = gameState.words[i];
+        if (box.value.includes(w.char)) {
+          triggerWordSuccess(i);
+          return;
+        }
+      }
+
+      // 2. 英文對應鍵完整比對（如天輸入 wu0，亦相容 wu0 加空白）
+      let exactMatchIndex = -1;
+      let maxY = -9999;
+      for (let i = 0; i < gameState.words.length; i++) {
+        const w = gameState.words[i];
+        if (w.keyStr === rawVal || (w.keyStr + ' ') === rawVal) {
+          if (w.y > maxY) {
+            maxY = w.y;
+            exactMatchIndex = i;
+          }
+        }
+      }
+
+      if (exactMatchIndex !== -1) {
+        triggerWordSuccess(exactMatchIndex);
+        return;
+      }
+
+      // 3. 部分前綴按鍵檢查（例如打 w 或 wu，天字卡上的字母逐步亮綠燈）
+      let hasPrefixMatch = false;
+      let targetPrefixWord = null;
+      let bestY = -9999;
+
+      gameState.words.forEach(w => {
+        if (w.keyStr.startsWith(rawVal)) {
+          hasPrefixMatch = true;
+          if (w.y > bestY) {
+            bestY = w.y;
+            targetPrefixWord = w;
+          }
+        }
+      });
+
+      if (hasPrefixMatch) {
+        setInputErrorState(false);
+        sound.playKeyStroke();
+
+        // 僅將優先度最高（即最下方）的目標字卡高亮更新
+        gameState.words.forEach(w => {
+          if (w === targetPrefixWord) {
+            w.typedIndex = rawVal.length;
+          } else {
+            w.typedIndex = 0;
+          }
+          renderWordBadges(w);
+        });
+      } else {
+        // 4. 按錯鍵：維持輸入內容並泛紅警示，學生必須使用 Backspace 刪除重按
+        setInputErrorState(true);
+        sound.playMiss();
+        gameState.misses++;
+        gameState.combo = 0;
+        updateStatusUI();
+
+        let lowestWord = null;
+        let lowY = -9999;
+        gameState.words.forEach(w => {
+          w.typedIndex = 0;
+          renderWordBadges(w);
+          if (w.y > lowY) {
+            lowY = w.y;
+            lowestWord = w;
+          }
+        });
+
+        if (lowestWord && lowestWord.element) {
+          lowestWord.element.classList.remove('error-shake');
+          void lowestWord.element.offsetWidth;
+          lowestWord.element.classList.add('error-shake');
+        }
+      }
+    }
+
+    function focusInputBox() {
+      const box = document.getElementById('typeInputBox');
+      if (box && gameState.active) {
+        box.focus();
+      }
+    }
+
+    function setupInputListeners() {
+      const box = document.getElementById('typeInputBox');
+      let isComposing = false;
+
+      box.addEventListener('compositionstart', () => {
+        isComposing = true;
+      });
+
+      box.addEventListener('compositionend', () => {
+        isComposing = false;
+        evaluateCurrentInput();
+      });
+
+      box.addEventListener('input', () => {
+        if (isComposing) return;
+        evaluateCurrentInput();
+      });
+
+      // 支援點擊舞台任何地方自動聚焦輸入框
+      document.getElementById('gameStage').addEventListener('click', focusInputBox);
+      window.addEventListener('click', (e) => {
+        if (gameState.active && !e.target.closest('button')) {
+          focusInputBox();
+        }
+      });
+    }
+
+    function gameLoop(currentTime) {
+      if (!gameState.active) return;
+
+      const delta = (currentTime - lastTime) / 16.666;
+      lastTime = currentTime;
+
+      const stageH = gameStage.clientHeight || 550;
+      const dangerY = stageH - 42;
+
+      for (let i = gameState.words.length - 1; i >= 0; i--) {
+        const w = gameState.words[i];
+        w.y += gameState.fallSpeed * (delta || 1);
+        w.element.style.top = `${w.y}px`;
+
+        if (w.y >= dangerY) {
+          gameState.dropped++;
+          gameState.combo = 0;
+          sound.playDrop();
+          showFloatingText(w.x, dangerY - 18, '掉落！', 'miss');
+          removeWord(i);
+          updateStatusUI();
+          evaluateCurrentInput();
+        }
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    // 重置並返回開始主畫面（點擊右上角重來鍵或結算頁設定鍵）
+    function resetToHome() {
+      gameState.active = false;
+      clearInterval(gameState.timerInterval);
+      clearInterval(gameState.spawnInterval);
+
+      // 清空字卡與舞台
+      wordContainer.innerHTML = '';
+      gameState.words = [];
+      particles = [];
+      pCtx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const box = document.getElementById('typeInputBox');
+      if (box) {
+        box.value = '';
+        setInputErrorState(false);
+      }
+      updateInputBufferDisplay();
+
+      // 重置各項指標顯示
+      gameState.timeLeft = 180;
+      gameState.score = 0;
+      gameState.combo = 0;
+      gameState.hits = 0;
+      gameState.misses = 0;
+      gameState.dropped = 0;
+      updateStatusUI();
+
+      // 切換遮罩層
+      document.getElementById('resultOverlay').classList.add('hidden');
+      document.getElementById('startOverlay').classList.remove('hidden');
+    }
+
+    function startGame() {
+      gameState.active = true;
+      gameState.score = 0;
+      gameState.combo = 0;
+      gameState.maxCombo = 0;
+      gameState.hits = 0;
+      gameState.misses = 0;
+      gameState.dropped = 0;
+      gameState.timeLeft = 180;
+      gameState.totalDuration = 180;
+
+      const box = document.getElementById('typeInputBox');
+      if (box) {
+        box.value = '';
+        setInputErrorState(false);
+      }
+
+      wordContainer.innerHTML = '';
+      gameState.words = [];
+      particles = [];
+
+      applySpeedSettings();
+      resizeCanvas();
+      updateStatusUI();
+      updateInputBufferDisplay();
+
+      document.getElementById('startOverlay').classList.add('hidden');
+      document.getElementById('resultOverlay').classList.add('hidden');
+
+      sound.init();
+      focusInputBox();
+
+      clearInterval(gameState.timerInterval);
+      gameState.timerInterval = setInterval(() => {
+        gameState.timeLeft--;
+        updateStatusUI();
+        if (gameState.timeLeft <= 0) {
+          gameOver();
+        }
+      }, 1000);
+
+      clearInterval(gameState.spawnInterval);
+      gameState.spawnInterval = setInterval(() => {
+        spawnWord();
+      }, gameState.spawnDelay);
+
+      spawnWord();
+      setTimeout(spawnWord, 500);
+
+      lastTime = performance.now();
+      requestAnimationFrame(gameLoop);
+      requestAnimationFrame(updateParticles);
+    }
+
+    function gameOver() {
+      gameState.active = false;
+      clearInterval(gameState.timerInterval);
+      clearInterval(gameState.spawnInterval);
+
+      sound.playGameover();
+
+      const elapsedSeconds = Math.max(1, gameState.totalDuration - gameState.timeLeft);
+      const minutes = elapsedSeconds / 60;
+      const wpm = Math.round(gameState.hits / (minutes || 1));
+      
+      const totalAttempts = gameState.hits + gameState.misses;
+      const acc = totalAttempts === 0 ? 100 : Math.round((gameState.hits / totalAttempts) * 100);
+
+      document.getElementById('finalHitsCount').textContent = gameState.hits;
+      document.getElementById('finalScore').textContent = gameState.score;
+      document.getElementById('finalCombo').textContent = gameState.maxCombo;
+      document.getElementById('finalWpm').textContent = wpm;
+      document.getElementById('finalAcc').textContent = `${acc}%`;
+      document.getElementById('finalHits').textContent = gameState.hits;
+      document.getElementById('finalMisses').textContent = gameState.misses;
+      document.getElementById('finalDropped').textContent = gameState.dropped;
+
+      // 結算時更新顯示本次使用的競賽模式
+      const modeNames = {
+        slow: '暖身速',
+        normal: '標準競賽速',
+        fast: '高手極速'
+      };
+      const modeBadge = document.getElementById('finalModeBadge');
+      if (modeBadge) {
+        modeBadge.textContent = `🎯 競賽模式：${modeNames[gameState.speedMode] || '標準競賽速'}`;
+      }
+
+      const resultBadge = document.getElementById('resultBadge');
+      const resultTitle = document.getElementById('resultTitle');
+      const resultSubtitle = document.getElementById('resultSubtitle');
+
+      if (gameState.score >= 2600) {
+        resultBadge.textContent = '👑';
+        resultTitle.textContent = '全校冠軍！楓樹打字神王！';
+        resultSubtitle.textContent = '神乎其技的鍵盤盲打反應，打對字數與速度震撼全場！';
+      } else if (gameState.score >= 1600) {
+        resultBadge.textContent = '🥇';
+        resultTitle.textContent = '太強了！楓樹特級鍵盤大師！';
+        resultSubtitle.textContent = '反應敏捷、指法極為純熟，高年級選手中的佼佼者！';
+      } else if (gameState.score >= 800) {
+        resultBadge.textContent = '🥈';
+        resultTitle.textContent = '發揮優異！楓樹高階快手！';
+        resultSubtitle.textContent = '順利完成3分鐘高難度加速賽，展現優秀的按鍵準確率！';
+      } else {
+        resultBadge.textContent = '🥉';
+        resultTitle.textContent = '完賽認證！再接再厲！';
+        resultSubtitle.textContent = '多熟悉對應鍵與指法位置，下一次競賽定能拿下更高分數！';
+      }
+
+      document.getElementById('resultOverlay').classList.remove('hidden');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      resizeCanvas();
+      setupInputListeners();
+
+      // 難度選擇切換
+      document.querySelectorAll('.speed-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.speed-btn').forEach(b => {
+            b.className = 'speed-btn flex-1 py-1.5 rounded-xl text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300';
+          });
+          const speed = btn.getAttribute('data-speed');
+          gameState.speedMode = speed;
+          btn.className = 'speed-btn flex-1 py-1.5 rounded-xl text-xs font-black bg-amber-500 text-white border-2 border-amber-600 ring-2 ring-amber-300';
