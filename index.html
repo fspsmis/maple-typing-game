@@ -15,16 +15,16 @@
       user-select: none; -webkit-user-select: none;
     }
 
-    /* 飄落楓葉 */
+    /* 飄落楓葉裝飾 */
     @keyframes fallLeaf {
-      0% { transform: translateY(-40px) rotate(0deg); opacity: 0.7; }
+      0% { transform: translateY(-40px) rotate(0deg); opacity: 0.6; }
       100% { transform: translateY(105vh) rotate(360deg); opacity: 0.1; }
     }
-    .leaf-1 { animation: fallLeaf 14s linear infinite; left: 8%; }
-    .leaf-2 { animation: fallLeaf 18s linear infinite 3s; left: 52%; }
-    .leaf-3 { animation: fallLeaf 15s linear infinite 7s; left: 88%; }
+    .leaf-1 { animation: fallLeaf 15s linear infinite; left: 10%; }
+    .leaf-2 { animation: fallLeaf 19s linear infinite 4s; left: 55%; }
+    .leaf-3 { animation: fallLeaf 16s linear infinite 8s; left: 88%; }
 
-    /* 下落字卡氣泡 */
+    /* 下落圓圈氣泡 */
     .word-bubble {
       position: absolute;
       will-change: transform, top, left;
@@ -33,7 +33,7 @@
     }
     .char-circle {
       transition: all 0.12s ease;
-      box-shadow: 0 4px 12px rgba(180, 83, 9, 0.2);
+      box-shadow: 0 4px 12px rgba(180, 83, 9, 0.22);
     }
     .word-bubble.error-shake .char-circle {
       animation: bubbleShake 0.3s ease-in-out;
@@ -49,7 +49,7 @@
       80% { transform: translateX(5px); }
     }
 
-    /* 浮動加分粒子文字 */
+    /* 浮動加分文字 */
     .float-text {
       position: absolute;
       font-weight: 900;
@@ -289,6 +289,18 @@
   </div>
 
   <script>
+    // 大千式鍵盤標準對照表：
+    // ㄅ:1  ㄆ:q  ㄇ:a  ㄈ:z
+    // ㄉ:2  ㄊ:w  ㄋ:s  ㄌ:x
+    // ㄍ:e  ㄎ:d  ㄏ:c
+    // ㄐ:r  ㄑ:f  ㄒ:v
+    // ㄓ:5  ㄔ:t  ㄕ:g  ㄖ:b
+    // ㄗ:y  ㄘ:h  ㄙ:n
+    // ㄧ:u  ㄨ:j  ㄩ:m
+    // ㄚ:8  ㄛ:i  ㄜ:k  ㄝ:,
+    // ㄞ:9  ㄟ:o  ㄠ:l  ㄡ:.
+    // ㄢ:0  ㄣ:p  ㄤ:;  ㄥ:/  ㄦ:-
+    // 一聲:空白鍵(' ')  二聲:6  三聲:3  四聲:4  輕聲:7
     const WORD_BANK = [
       { char: '天', zhuyin: 'ㄊㄧㄢ', keys: ['w','u','0',' '] },
       { char: '地', zhuyin: 'ㄉㄧˋ', keys: ['2','u','4'] },
@@ -296,14 +308,14 @@
       { char: '大', zhuyin: 'ㄉㄚˋ', keys: ['2','8','4'] },
       { char: '小', zhuyin: 'ㄒㄧㄠˇ', keys: ['v','u','l','3'] },
       { char: '日', zhuyin: 'ㄖˋ', keys: ['b','4'] },
-      { char: '月', zhuyin: 'ㄩㄝˋ', keys: ['m','u','4'] },
+      { char: '月', zhuyin: 'ㄩㄝˋ', keys: ['m',',','4'] },
       { char: '山', zhuyin: 'ㄕㄢ', keys: ['g','0',' '] },
       { char: '水', zhuyin: 'ㄕㄨㄟˇ', keys: ['g','j','o','3'] },
       { char: '火', zhuyin: 'ㄏㄨㄛˇ', keys: ['c','j','i','3'] },
       { char: '木', zhuyin: 'ㄇㄨˋ', keys: ['a','j','4'] },
       { char: '風', zhuyin: 'ㄈㄥ', keys: ['z','/',' '] },
-      { char: '光', zhuyin: 'ㄍㄨㄤ', keys: ['e','j','/',' '] },
-      { char: '學', zhuyin: 'ㄒㄩㄝˊ', keys: ['v','m','u','6'] },
+      { char: '光', zhuyin: 'ㄍㄨㄤ', keys: ['e','j',';',' '] },
+      { char: '學', zhuyin: 'ㄒㄩㄝˊ', keys: ['v','m',',','6'] },
       { char: '校', zhuyin: 'ㄒㄧㄠˋ', keys: ['v','u','l','4'] },
       { char: '楓', zhuyin: 'ㄈㄥ', keys: ['z','/',' '] },
       { char: '樹', zhuyin: 'ㄕㄨˋ', keys: ['g','j','4'] },
@@ -312,10 +324,10 @@
       { char: '牌', zhuyin: 'ㄆㄞˊ', keys: ['q','9','6'] },
       { char: '榮', zhuyin: 'ㄖㄨㄥˊ', keys: ['b','j','/','6'] },
       { char: '耀', zhuyin: 'ㄧㄠˋ', keys: ['u','l','4'] },
-      { char: '創', zhuyin: 'ㄔㄨㄤˋ', keys: ['t','j','/','4'] },
-      { char: '造', zhuyin: 'ㄗㄠˋ', keys: ['y','k','4'] },
+      { char: '創', zhuyin: 'ㄔㄨㄤˋ', keys: ['t','j',';','4'] },
+      { char: '造', zhuyin: 'ㄗㄠˋ', keys: ['y','l','4'] },
       { char: '超', zhuyin: 'ㄔㄠ', keys: ['t','l',' '] },
-      { char: '越', zhuyin: 'ㄩㄝˋ', keys: ['m','u','4'] },
+      { char: '越', zhuyin: 'ㄩㄝˋ', keys: ['m',',','4'] },
       { char: '智', zhuyin: 'ㄓˋ', keys: ['5','4'] },
       { char: '慧', zhuyin: 'ㄏㄨㄟˋ', keys: ['c','j','o','4'] },
       { char: '勇', zhuyin: 'ㄩㄥˇ', keys: ['m','/','3'] },
@@ -323,7 +335,7 @@
       { char: '堅', zhuyin: 'ㄐㄧㄢ', keys: ['r','u','0',' '] },
       { char: '持', zhuyin: 'ㄔˊ', keys: ['t','6'] },
       { char: '希', zhuyin: 'ㄒㄧ', keys: ['v','u',' '] },
-      { char: '望', zhuyin: 'ㄨㄤˋ', keys: ['j','/','4'] },
+      { char: '望', zhuyin: 'ㄨㄤˋ', keys: ['j',';','4'] },
       { char: '未', zhuyin: 'ㄨㄟˋ', keys: ['j','o','4'] },
       { char: '來', zhuyin: 'ㄌㄞˊ', keys: ['x','9','6'] },
       { char: '友', zhuyin: 'ㄧㄡˇ', keys: ['u','.','3'] },
@@ -333,15 +345,15 @@
       { char: '冠', zhuyin: 'ㄍㄨㄢ', keys: ['e','j','0',' '] },
       { char: '軍', zhuyin: 'ㄐㄩㄣ', keys: ['r','m','p',' '] },
       { char: '夢', zhuyin: 'ㄇㄥˋ', keys: ['a','/','4'] },
-      { char: '想', zhuyin: 'ㄒㄧㄤˇ', keys: ['v','u','/','3'] },
+      { char: '想', zhuyin: 'ㄒㄧㄤˇ', keys: ['v','u',';','3'] },
       { char: '成', zhuyin: 'ㄔㄥˊ', keys: ['t','/','6'] },
       { char: '功', zhuyin: 'ㄍㄨㄥ', keys: ['e','j','/',' '] },
       { char: '力', zhuyin: 'ㄌㄧˋ', keys: ['x','u','4'] },
-      { char: '量', zhuyin: 'ㄌㄧㄤˋ', keys: ['x','u','/','4'] },
+      { char: '量', zhuyin: 'ㄌㄧㄤˋ', keys: ['x','u',';','4'] },
       { char: '競', zhuyin: 'ㄐㄧㄥˋ', keys: ['r','u','/','4'] },
       { char: '賽', zhuyin: 'ㄙㄞˋ', keys: ['n','9','4'] },
       { char: '團', zhuyin: 'ㄊㄨㄢˊ', keys: ['w','j','0','6'] },
-      { char: '結', zhuyin: 'ㄐㄧㄝˊ', keys: ['r','u','u','6'] },
+      { char: '結', zhuyin: 'ㄐㄧㄝˊ', keys: ['r','u',',','6'] },
       { char: '努', zhuyin: 'ㄋㄨˇ', keys: ['s','j','3'] },
       { char: '奮', zhuyin: 'ㄈㄣˋ', keys: ['z','p','4'] },
       { char: '鬥', zhuyin: 'ㄉㄡˋ', keys: ['2','.','4'] },
@@ -389,7 +401,7 @@
           state.audioCtx.resume();
         }
       } catch (err) {
-        console.warn('AudioContext not allowed yet:', err);
+        console.warn('AudioContext not initialized yet:', err);
       }
     }
 
@@ -486,6 +498,7 @@
       const stageWidth = gameStage.clientWidth || window.innerWidth;
       if (stageWidth < 150) return;
 
+      // 嚴格過濾：同字不重複、前綴注音衝突不出現
       const availableWords = WORD_BANK.filter(candidate => {
         return !state.wordsOnScreen.some(w => 
           w.char === candidate.char || hasPrefixConflict(w, candidate)
@@ -501,6 +514,7 @@
       let bestX = minX + Math.random() * (maxX - minX);
       let maxDist = -1;
 
+      // 自動避讓上方字卡，防止互相遮蓋
       for (let attempt = 0; attempt < 8; attempt++) {
         const testX = minX + Math.random() * (maxX - minX);
         let minDistToTopWords = 9999;
@@ -533,7 +547,11 @@
       el.style.top = `${wordObj.y}px`;
 
       const keyBadges = wordObj.keys.map((k, idx) => {
-        const displayLabel = k === ' ' ? '␣' : k.toUpperCase();
+        let displayLabel = k.toUpperCase();
+        if (k === ' ') displayLabel = '␣';
+        else if (k === ',') displayLabel = ',';
+        else if (k === ';') displayLabel = ';';
+        else if (k === '/') displayLabel = '/';
         return `<span class="key-badge key-${idx} bg-amber-100 text-amber-900 border border-amber-300 rounded px-1 text-[9px] font-black">${displayLabel}</span>`;
       }).join('');
 
